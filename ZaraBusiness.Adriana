@@ -1,0 +1,187 @@
+-- Crear base de datos
+CREATE DATABASE IF NOT EXISTS ZaraBusiness;
+USE DATABASE ZaraBusiness;
+
+-- Crear secuencias para IDs automáticos
+CREATE SEQUENCE IF NOT EXISTS seq_clientes START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS seq_tiendas START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS seq_empleados START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS seq_prendas START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS seq_compras START WITH 1 INCREMENT BY 1;
+
+-- Tabla de Clientes
+CREATE TABLE IF NOT EXISTS Clientes (
+    id_cliente INT DEFAULT seq_clientes.NEXTVAL PRIMARY KEY,
+    nombre_cliente STRING NOT NULL,
+    email_cliente STRING NOT NULL,
+    ciudad STRING,
+    pais STRING
+);
+
+-- Tabla de Tiendas
+CREATE TABLE IF NOT EXISTS Tiendas (
+    id_tienda INT DEFAULT seq_tiendas.NEXTVAL PRIMARY KEY,
+    nombre_tienda STRING NOT NULL,
+    direccion STRING,
+    ciudad STRING,
+    pais STRING
+);
+
+-- Tabla de Empleados
+CREATE TABLE IF NOT EXISTS Empleados (
+    id_empleado INT DEFAULT seq_empleados.NEXTVAL PRIMARY KEY,
+    nombre_empleado STRING NOT NULL,
+    puesto STRING,
+    tienda_id INT,
+    fecha_contratacion DATE,
+    FOREIGN KEY (tienda_id) REFERENCES Tiendas(id_tienda)
+);
+
+-- Tabla de Prendas de Ropa
+CREATE TABLE IF NOT EXISTS Prendas (
+    id_prenda INT DEFAULT seq_prendas.NEXTVAL PRIMARY KEY,
+    tipo_prenda STRING NOT NULL,
+    talla STRING,
+    color STRING,
+    precio DECIMAL(10, 2) NOT NULL
+);
+
+-- Tabla de Compras
+CREATE TABLE IF NOT EXISTS Compras (
+    id_compra INT DEFAULT seq_compras.NEXTVAL PRIMARY KEY,
+    id_cliente INT,
+    fecha_compra DATE,
+    monto_total DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES Clientes(id_cliente)
+);
+
+-- Insertar datos en Clientes
+INSERT INTO Clientes (nombre_cliente, email_cliente, ciudad, pais)
+VALUES
+('Carlos Ramírez', 'carlos.ramirez@email.com', 'Madrid', 'España'),
+('Laura González', 'laura.gonzalez@email.com', 'Barcelona', 'España'),
+('Andrés García', 'andres.garcia@email.com', 'Valencia', 'España'),
+('Lucía Martínez', 'lucia.martinez@email.com', 'Sevilla', 'España'),
+('Miguel Torres', 'miguel.torres@email.com', 'Zaragoza', 'España');
+
+-- Insertar datos en Tiendas
+INSERT INTO Tiendas (nombre_tienda, direccion, ciudad, pais)
+VALUES
+('Zara Gran Vía', 'Calle Gran Vía, 32', 'Madrid', 'España'),
+('Zara Portal de l\'Àngel', 'Portal de l\'Àngel, 10', 'Barcelona', 'España'),
+('Zara Calle de Colón', 'Calle de Colón, 20', 'Valencia', 'España'),
+('Zara Calle Sierpes', 'Calle Sierpes, 40', 'Sevilla', 'España'),
+('Zara Paseo de la Independencia', 'Paseo de la Independencia, 5', 'Zaragoza', 'España');
+
+-- Insertar datos en Empleados
+INSERT INTO Empleados (nombre_empleado, puesto, tienda_id, fecha_contratacion)
+VALUES
+('Juan Pérez', 'Vendedor', 1, '2022-01-10'),
+('María López', 'Gerente', 2, '2021-11-15'),
+('Carlos Fernández', 'Vendedor', 3, '2023-02-01'),
+('Ana García', 'Encargada', 4, '2023-05-25'),
+('Luis Martínez', 'Vendedor', 5, '2023-06-10');
+
+-- Insertar datos en Prendas
+INSERT INTO Prendas (tipo_prenda, talla, color, precio)
+VALUES
+('Camiseta', 'M', 'Negro', 19.99),
+('Pantalón', 'L', 'Azul', 39.99),
+('Chaqueta', 'S', 'Rojo', 59.99),
+('Falda', 'M', 'Verde', 29.99),
+('Zapatos', '42', 'Negro', 49.99),
+('Vestido', 'L', 'Blanco', 59.99),
+('Camisa', 'M', 'Azul', 29.99),
+('Abrigo', 'L', 'Gris', 89.99),
+('Shorts', 'S', 'Rosa', 24.99),
+('Sudadera', 'XL', 'Negro', 34.99);
+
+-- Insertar datos en Compras
+INSERT INTO Compras (id_cliente, fecha_compra, monto_total)
+VALUES
+(1, '2023-04-01', 100.50),
+(2, '2023-05-15', 59.99),
+(3, '2023-06-20', 75.00),
+(4, '2023-07-18', 120.00),
+(5, '2023-08-10', 99.99),
+(1, '2023-09-01', 200.00),
+(2, '2023-09-10', 150.00),
+(3, '2023-09-15', 50.00),
+(4, '2023-09-20', 90.00),
+(5, '2023-09-25', 30.00);
+
+--Preguntas:
+-- 1. Selecciona todos los clientes.
+SELECT * FROM Clientes;
+
+-- 2. Selecciona todos los empleados.
+SELECT * FROM Empleados;
+
+-- 3. Selecciona todas las tiendas.
+SELECT * FROM Tiendas;
+
+-- 4. Selecciona todas las prendas de ropa.
+SELECT * FROM Prendas;
+
+-- 5. Busca clientes cuyo nombre comience con la letra "L".
+SELECT * FROM Clientes WHERE nombre_cliente LIKE 'L%';
+
+-- 6. Cuenta cuántos clientes hay en la base de datos.
+SELECT COUNT(*) AS total_clientes FROM Clientes;
+
+-- 7. Selecciona las compras realizadas después del 1 de mayo de 2023.
+SELECT * FROM Compras WHERE fecha_compra > '2023-05-01';
+
+-- 8. Actualiza el correo electrónico de un cliente específico.
+UPDATE Clientes SET email_cliente = 'nuevo.email@email.com' WHERE id_cliente = 1;
+
+-- 9. Elimina un cliente por su ID.
+DELETE FROM Clientes WHERE id_cliente = 5;
+
+-- 10. Selecciona las prendas de color Negro.
+SELECT * FROM Prendas WHERE color = 'Negro';
+
+-- 11. Selecciona todas las tiendas que hay en Madrid.
+SELECT * FROM Tiendas WHERE ciudad = 'Madrid';
+
+-- 12. Cuenta cuántas prendas tienen un precio mayor a 50.
+SELECT COUNT(*) AS prendas_caras FROM Prendas WHERE precio > 50;
+
+-- 13. Selecciona los empleados que trabajan en la tienda con ID 1.
+SELECT * FROM Empleados WHERE tienda_id = 1;
+
+-- 14. Busca clientes cuyo nombre contenga "Andrés".
+SELECT * FROM Clientes WHERE nombre_cliente LIKE '%Andrés%';
+
+-- 15. Selecciona las compras realizadas por el cliente con ID 2.
+SELECT * FROM Compras WHERE id_cliente = 2;
+
+-- 16. Elimina todas las compras cuyo monto sea menor a 30.
+DELETE FROM Compras WHERE monto_total < 30;
+
+-- 17. Selecciona las prendas cuyo precio esté entre 20 y 40.
+SELECT * FROM Prendas WHERE precio BETWEEN 20 AND 40;
+
+-- 18. Busca empleados cuyo nombre contenga la letra "a".
+SELECT * FROM Empleados WHERE nombre_empleado LIKE '%a%';
+
+-- 19. Selecciona las 5 prendas más caras.
+SELECT * FROM Prendas ORDER BY precio DESC LIMIT 5;
+
+-- 20. Selecciona las compras de un cliente con un monto superior a 75.
+SELECT * FROM Compras WHERE monto_total > 75;
+
+-- 21. Selecciona las prendas de talla M.
+SELECT * FROM Prendas WHERE talla = 'M';
+
+-- 22. Actualiza la talla de una prenda específica por su ID.
+UPDATE Prendas SET talla = 'L' WHERE id_prenda = 1;
+
+-- 23. Selecciona todos los empleados contratados después del 1 de enero de 2022.
+SELECT * FROM Empleados WHERE fecha_contratacion > '2022-01-01';
+
+-- 24. Busca tiendas en "Barcelona".
+SELECT * FROM Tiendas WHERE ciudad = 'Barcelona';
+
+-- 25. Elimina un empleado por su ID.
+DELETE FROM Empleados WHERE id_empleado = 3;
