@@ -1,0 +1,240 @@
+-- Crear la base de datos BibliotecaDB
+CREATE DATABASE IF NOT EXISTS BibliotecaDB;
+
+-- Usar la base de datos
+USE DATABASE BibliotecaDB;
+
+-- Crear secuencias para generar IDs automáticos
+CREATE SEQUENCE IF NOT EXISTS seq_autor START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS seq_libro START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS seq_miembro START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS seq_prestamo START WITH 1 INCREMENT BY 1;
+
+-- Crear la tabla Autor
+CREATE TABLE Autor (
+    autor_id INT DEFAULT seq_autor.NEXTVAL PRIMARY KEY,
+    nombre STRING,
+    apellido STRING
+);
+
+-- Crear la tabla Libro
+CREATE TABLE Libro (
+    libro_id INT DEFAULT seq_libro.NEXTVAL PRIMARY KEY,
+    titulo STRING,
+    genero STRING,
+    anio_publicacion INT, -- YEAR no es compatible en Snowflake, usamos INT
+    autor_id INT,
+    FOREIGN KEY (autor_id) REFERENCES Autor(autor_id)
+);
+
+-- Crear la tabla Miembro
+CREATE TABLE Miembro (
+    miembro_id INT DEFAULT seq_miembro.NEXTVAL PRIMARY KEY,
+    nombre STRING,
+    apellido STRING,
+    fecha_inicio_membresia DATE
+);
+
+-- Crear la tabla Prestamo
+CREATE TABLE Prestamo (
+    prestamo_id INT DEFAULT seq_prestamo.NEXTVAL PRIMARY KEY,
+    libro_id INT,
+    miembro_id INT,
+    fecha_prestamo DATE,
+    fecha_devolucion DATE,
+    FOREIGN KEY (libro_id) REFERENCES Libro(libro_id),
+    FOREIGN KEY (miembro_id) REFERENCES Miembro(miembro_id)
+);
+
+-- Insertar datos de ejemplo en Autor
+INSERT INTO Autor (nombre, apellido) VALUES
+('John', 'Steinbeck'),
+('George', 'Orwell'),
+('Jane', 'Austen'),
+('Mark', 'Twain');
+
+-- Insertar datos de ejemplo en Libro
+INSERT INTO Libro (titulo, genero, anio_publicacion, autor_id) VALUES
+('Las uvas de la ira', 'Ficción', 1939, 1),
+('1984', 'Distopía', 1949, 2),
+('Orgullo y prejuicio', 'Romance', 1813, 3),
+('Las aventuras de Tom Sawyer', 'Aventura', 1876, 4);
+
+-- Insertar datos de ejemplo en Miembro
+INSERT INTO Miembro (nombre, apellido, fecha_inicio_membresia) VALUES
+('Alicia', 'Johnson', '2021-06-01'),
+('Roberto', 'Smith', '2020-03-15'),
+('Carla', 'Williams', '2022-01-20');
+
+-- Insertar datos de ejemplo en Prestamo
+INSERT INTO Prestamo (libro_id, miembro_id, fecha_prestamo, fecha_devolucion) VALUES
+(1, 1, '2023-08-15', '2023-09-01'),
+(2, 2, '2023-07-10', '2023-07-25'),
+(3, 1, '2023-09-05', NULL);
+
+-- Consulta para unir Libro y Autor
+SELECT l.titulo, a.nombre, a.apellido
+FROM Libro l
+JOIN Autor a ON l.autor_id = a.autor_id;
+
+-- Consulta para encontrar préstamos activos (donde fecha_devolucion es NULL)
+SELECT p.prestamo_id, l.titulo, m.nombre, m.apellido, p.fecha_prestamo
+FROM Prestamo p
+JOIN Libro l ON p.libro_id = l.libro_id
+JOIN Miembro m ON p.miembro_id = m.miembro_id
+WHERE p.fecha_devolucion IS NULL;
+
+--Preguntas:
+-- Seleccionar todos los datos de la tabla Autor
+SELECT * FROM Autor;
+
+-- Seleccionar columnas específicas de la tabla Libro
+SELECT titulo, genero FROM Libro;
+
+-- Usar el nombre completo de la tabla y base de datos
+SELECT PUBLIC.Autor.nombre, PUBLIC.Autor.apellido 
+FROM PUBLIC.Autor;
+
+-- Limitar el resultado a las primeras 5 filas
+SELECT * FROM Libro LIMIT 5;
+
+-- Contar el número de registros en la tabla Miembro
+SELECT COUNT(*) AS Total_Miembros FROM Miembro;
+
+-- Obtener valores únicos de géneros de libros
+SELECT DISTINCT genero FROM Libro;
+
+-- ACTIVIDAD 1: Muestra el número de géneros unicos de Libros. Cuantos generos hay?
+SELECT COUNT(DISTINCT genero) AS Total_Generos FROM Libro;
+
+
+-- Alias de columnas para mejorar la legibilidad
+SELECT COUNT(DISTINCT genero) AS Total_Generos_Unicos
+FROM Libro;
+
+-- Alias para tablas
+SELECT l.titulo AS 'Título', a.nombre AS 'Nombre Autor', a.apellido AS 'Apellido Autor'
+FROM Libro AS l
+JOIN Autor AS a ON l.autor_id = a.autor_id;
+
+-- ACTIVIDAD 2: Muestra el título y el genero de todos los libros usando alias para ambas columnas como titulo_libro y genero_libro.
+SELECT titulo AS titulo_libro, genero AS genero_libro FROM Libro;
+
+
+-- ACTIVIDAD 3: Muestra los nombres y apellidos de los miembros, usando alias para ambas columnas como Nombre_Miembro y Apellido_Miembro.
+SELECT nombre AS Nombre_Miembro, apellido AS Apellido_Miembro FROM Miembro;
+
+
+
+-- ==================================================
+-- Operadores Aritméticos
+-- ==================================================
+
+-- Calcular el año actual menos el año de publicación de los libros (Usa YEAR(CURDATE()) y resta)
+SELECT titulo, YEAR(CURDATE()) - anio_publicacion AS Anios_Desde_Publicacion 
+FROM Libro;
+
+-- Mostrar la diferencia entre la fecha de inicio de membresía y la fecha actual en días (Usa DATEDIFF)
+SELECT nombre, apellido, DATEDIFF(CURDATE(), fecha_inicio_membresia) AS Dias_Membresia 
+FROM Miembro;
+
+-- ACTIVIDAD 4: Muestra el número de años que cada miembro ha estado registrado en la biblioteca.
+SELECT nombre, apellido, FLOOR(DATEDIFF(CURDATE(), fecha_inicio_membresia) / 365) AS Anios_Registrado 
+FROM Miembro;
+
+
+-- ACTIVIDAD 5: Selecciona el miembro_id, el libro_id y muestra una operación matemática donde sumes el libro_id con el doble del miembro_id. Alias el resultado como Operacion_Absurda.
+SELECT miembro_id, libro_id, libro_id + (2 * miembro_id) AS Operacion_Absurda 
+FROM Prestamo;
+
+
+-- ACTIVIDAD 6: Muestra el libro_id, el título y el año de publicación, incrementando el valor de anio_publicacion en 10 años. Alias el resultado como Anio_Futuro.
+SELECT libro_id, titulo, anio_publicacion + 10 AS Anio_Futuro 
+FROM Libro;
+
+-- ==================================================
+-- Comparación y Filtrado
+-- ==================================================
+
+-- Filtrar libros publicados después del año 1900
+SELECT * FROM Libro WHERE anio_publicacion > 1900;
+
+-- Usar el operador <> para excluir un género (por ejemplo Romance)
+SELECT * FROM Libro WHERE genero <> 'Romance';
+
+-- Usar la cláusula IN para buscar por varios géneros (por ejemplo Ficción, Distopía y Romance)
+SELECT * FROM Libro WHERE genero IN ('Ficción', 'Distopía', 'Romance');
+
+-- Ordenar resultados por año de publicación y limitar a 5 resultados
+SELECT * FROM Libro ORDER BY anio_publicacion ASC LIMIT 5;
+
+-- ACTIVIDAD 7: Filtra los libros publicados antes de 1900 que pertenezcan al género "Ficción".
+SELECT * FROM Libro WHERE anio_publicacion < 1900 AND genero = 'Ficción';
+
+
+-- ACTIVIDAD 8: Filtra los miembros que se registraron después del 1 de enero de 2021.
+SELECT * FROM Miembro WHERE fecha_inicio_membresia > '2021-01-01';
+
+
+-- ==================================================
+-- Operadores Lógicos
+-- ==================================================
+
+-- Condiciones combinadas con AND
+SELECT * 
+FROM Libro 
+WHERE (genero = 'Ficción' OR genero = 'Aventura') AND anio_publicacion > 1900;
+
+-- Usar OR para múltiples condiciones
+SELECT * 
+FROM Libro 
+WHERE anio_publicacion <> 1949;
+
+-- Usar NOT después del WHERE para negar una condición
+SELECT * 
+FROM Libro 
+WHERE NOT (genero = 'Romance');
+
+-- ACTIVIDAD 9: Encuentra todos los libros de los géneros "Ficción" o "Aventura" que se publicaron después de 1900.
+SELECT * FROM Libro WHERE (genero = 'Ficción' OR genero = 'Aventura') AND anio_publicacion > 1900;
+
+
+-- ACTIVIDAD 10: Consulta para filtrar los libros que no fueron publicados en 1949:
+SELECT * FROM Libro WHERE anio_publicacion <> 1949;
+
+
+
+-- ==================================================
+-- Funciones Numéricas
+-- ==================================================
+
+
+-- Encontrar el mayor año de publicación
+SELECT MAX(anio_publicacion) AS Anio_Mas_Reciente 
+FROM Libro;
+
+
+-- PREGUNTA: puedes ver los títulos publicados en este año?
+SELECT titulo, anio_publicacion 
+FROM Libro 
+WHERE anio_publicacion = (SELECT MAX(anio_publicacion) 
+FROM Libro);
+
+-- Redondear el promedio de los días de membresía
+SELECT ROUND(AVG(DATEDIFF('day', fecha_inicio_membresia, CURRENT_DATE())), 2) AS "Promedio de días de membresía"
+FROM Miembro;
+
+-- Usar FLOOR ('Días promedio redondeado hacia abajo') y CEILING como ('Días promedio redondeado hacia arriba') para redondear a entero
+SELECT 
+    FLOOR(AVG(DATEDIFF('day', fecha_inicio_membresia, CURRENT_DATE()))) AS "Días promedio redondeado hacia abajo",
+    CEIL(AVG(DATEDIFF('day', fecha_inicio_membresia, CURRENT_DATE()))) AS "Días promedio redondeado hacia arriba"
+FROM Miembro;
+
+-- ACTIVIDAD 11: Consulta para encontrar el libro más antiguo y el más reciente en la base de datos
+SELECT titulo, anio_publicacion 
+FROM Libro 
+WHERE anio_publicacion = (SELECT MIN(anio_publicacion) FROM Libro) 
+   OR anio_publicacion = (SELECT MAX(anio_publicacion) FROM Libro);
+
+-- ACTIVIDAD 12: Muestra el promedio de los años de publicación de los libros en la biblioteca.
+SELECT ROUND(AVG(anio_publicacion), 2) AS Promedio_Anio_Publicacion FROM Libro;
